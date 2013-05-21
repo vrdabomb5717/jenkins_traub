@@ -1,7 +1,7 @@
-Title: Finding Roots of a Polynomial Using Jenkins-Traub
-Author: Varun Ravishankar
-Email: vr2263@columbia.edu
-Date: May 4th, 2013
+Title: Finding Roots of a Polynomial Using Jenkins-Traub  
+Author: Varun Ravishankar  
+Email: vr2263@columbia.edu  
+Date: May 4th, 2013  
 
 # Finding Roots of a Polynomial Using Jenkins-Traub
 ## by Varun Ravishankar
