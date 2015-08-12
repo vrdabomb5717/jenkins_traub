@@ -219,8 +219,6 @@ def jenkins_traub_inner(coefficients, epsilon, max_iterations, do_stage_one=True
             max_iterations *= 2
             continue
 
-    return H_lambda, s_lambda
-
 
 def jenkins_traub(coefficients, epsilon, max_iterations):
     """Find the roots of a polynomial using the Jenkins-Traub algorithm.
