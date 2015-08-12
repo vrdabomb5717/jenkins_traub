@@ -88,12 +88,11 @@ def stage2(a, H_lambda, s, epsilon, max_iterations):
             h_bar_at_s += epsilon / 100
 
         h_bar = np.insert(h_bar, 0, 0)  # watch for polynomial length differences
-        H_bar_lambda_next = p - (p_at_s / h_bar_at_s) * h_bar
+        H_bar_lambda = p - (p_at_s / h_bar_at_s) * h_bar
 
         t_prev, t_prev_prev = t, t_prev
         t = s - p_at_s / h_bar_at_s
 
-        H_bar_lambda = H_bar_lambda_next
         num_iterations += 1
 
         condition1 = np.absolute(t_prev - t_prev_prev) <= 0.5 * np.absolute(t_prev_prev)
