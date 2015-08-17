@@ -39,10 +39,11 @@ class TestJenkinsTraub(TestCase):
         # Iterate through the Jenkins-Traub roots, removing roots from the
         # numpy roots if there is a match. If no match is found, the test
         # fails.
+        expected_roots = np.copy(roots)
         for jt_root in jt:
-            for index, root in enumerate(roots):
+            for index, root in enumerate(expected_roots):
                 if np.isclose(jt_root, root):
-                    roots = np.delete(roots, index)
+                    expected_roots = np.delete(expected_roots, index)
                     break
             else:
                 self.fail('roots differ: {} != {}'.format(jt, roots))
