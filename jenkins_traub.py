@@ -17,6 +17,10 @@ class ConvergenceError(Exception):
     pass
 
 
+class RootFound(Exception):
+    pass
+
+
 def evaluate(coefficients):
     """Evaluate a polynomial with given coefficients in highest to lowest order."""
     return lambda s: synthetic_division(coefficients, s)[1]
@@ -51,16 +55,43 @@ def synthetic_division(coefficients, s):
     return deflated, evaluation
 
 
+def next_step(a, H_bar_lambda, s, epsilon, generate_t=True):
+    """Generate the next H_bar_lambda and t, if desired."""
+    p, p_at_s = synthetic_division(a, s)
+    h_bar, h_bar_at_s = synthetic_division(H_bar_lambda, s)
+
+    # If we found a root, short circuit the other logic.
+    # Used for when we found a root exactly, and we'd end up dividing
+    # by 0 when finding s_lambda
+    if np.absolute(p_at_s) < epsilon:
+        raise RootFound()
+
+    if np.absolute(h_bar_at_s) < epsilon:
+        h_bar_at_s += epsilon / 100
+
+    t = None
+    if generate_t:
+        t = s - p_at_s / h_bar_at_s
+
+    h_bar = np.insert(h_bar, 0, 0)  # watch for polynomial length differences
+    return p - (p_at_s / h_bar_at_s) * h_bar, t
+
+
 def stage1(a, H_lambda, epsilon, max_iterations):
     """Perform Stage 1, the no-shift process of Jenkins-Traub.
 
     Returns the deflated polynomial, and the number of iterations the stage took.
 
     """
-    for i in xrange(max_iterations):
-        H_bar_lambda, _ = stage2(a, H_lambda, 0, epsilon, 1)
+    H_bar_lambda = H_lambda / H_lambda[0]
 
-    return H_lambda, max_iterations
+    for num_iterations in xrange(max_iterations):
+        try:
+            H_bar_lambda, _ = next_step(a, H_bar_lambda, 0, epsilon, False)
+        except RootFound:
+            break
+
+    return H_bar_lambda, num_iterations
 
 
 def stage2(a, H_lambda, s, epsilon, max_iterations):
@@ -69,31 +100,19 @@ def stage2(a, H_lambda, s, epsilon, max_iterations):
     Returns the deflated polynomial, and the number of iterations the stage took.
 
     """
-    t = t_prev = t_prev_prev = float('inf')
+    t = t_prev = float('inf')
     num_iterations = 0
 
     H_bar_lambda = H_lambda / H_lambda[0]
 
     while True:
-        p, p_at_s = synthetic_division(a, s)
-        h_bar, h_bar_at_s = synthetic_division(H_bar_lambda, s)
-
-        # If we found a root, short circuit the other logic.
-        # Used for when we found a root exactly, and we'd end up dividing
-        # by 0 when finding s_lambda
-        if np.absolute(p_at_s) < epsilon:
-            return H_bar_lambda, num_iterations
-
-        if np.absolute(h_bar_at_s) < epsilon:
-            h_bar_at_s += epsilon / 100
-
-        h_bar = np.insert(h_bar, 0, 0)  # watch for polynomial length differences
-        H_bar_lambda_next = p - (p_at_s / h_bar_at_s) * h_bar
-
         t_prev, t_prev_prev = t, t_prev
-        t = s - p_at_s / h_bar_at_s
 
-        H_bar_lambda = H_bar_lambda_next
+        try:
+            H_bar_lambda, t = next_step(a, H_bar_lambda, s, epsilon)
+        except RootFound:
+            break
+
         num_iterations += 1
 
         condition1 = np.absolute(t_prev - t_prev_prev) <= 0.5 * np.absolute(t_prev_prev)
@@ -218,8 +237,6 @@ def jenkins_traub_inner(coefficients, epsilon, max_iterations, do_stage_one=True
         except ConvergenceError:
             max_iterations *= 2
             continue
-
-    return H_lambda, s_lambda
 
 
 def jenkins_traub(coefficients, epsilon, max_iterations):
